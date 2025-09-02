@@ -1,7 +1,8 @@
 import React, { useState, useMemo } from 'react';
 import { mockTickets } from './data/mockData';
 import { HIERARCHY_DATA } from './data/hierarchy';
-import { onCall, services, alerts } from './data/sreData';
+import { onCall, services, alerts, deployments } from './data/sreData';
+import { RUNBOOKS } from './data/runbookData';
 import { Ticket, Priority, Status } from './types';
 
 // Components
@@ -15,7 +16,9 @@ import KeyMetrics from './components/KeyMetrics';
 import OnCallSchedule from './components/OnCallSchedule';
 import ServiceHealth from './components/ServiceHealth';
 import CriticalAlerts from './components/CriticalAlerts';
-import { Squares2X2Icon, ChartBarIcon, CogIcon } from './components/Icons';
+import RecentDeployments from './components/RecentDeployments';
+import Runbooks from './components/Runbooks';
+import { Squares2X2Icon, ChartBarIcon, CogIcon, ArrowPathIcon } from './components/Icons';
 
 const App: React.FC = () => {
   const [page, setPage] = useState<'operations' | 'heatmap' | 'configuration'>('operations');
@@ -118,6 +121,14 @@ const App: React.FC = () => {
     if (selectedBeam !== 'all') return selectedBeam;
     return "All Beams";
   }, [selectedBeam, selectedUnit, selectedPortfolio]);
+  
+  const handleResetFilters = () => {
+    setSelectedBeam('all');
+    setSelectedUnit('all');
+    setSelectedPortfolio('all');
+    setViewMode('active');
+    setTimeRange('30');
+  };
 
   const priorityOrder = [Priority.CRITICAL, Priority.HIGH, Priority.MODERATE, Priority.LOW];
   const viewModeText = viewMode === 'active' ? 'Active' : 'Resolved';
@@ -156,8 +167,8 @@ const App: React.FC = () => {
       </aside>
       
       <div className="flex-1 flex flex-col overflow-hidden">
-        <main className="flex-1 overflow-y-auto p-4 md:p-6">
-          <div className="mb-6 bg-brand-secondary p-4 rounded-lg shadow-md flex justify-end items-center gap-4">
+        <main className="flex-1 overflow-y-auto p-4 md:p-6 flex flex-col">
+          <div className="mb-6 bg-brand-secondary p-4 rounded-lg shadow-md flex justify-end items-center gap-4 flex-shrink-0">
             <div className="flex items-center bg-gray-200 rounded-full p-1">
               <button onClick={() => setViewMode('active')} className={`px-4 py-1 text-sm font-semibold rounded-full transition-colors ${viewMode === 'active' ? 'bg-white text-brand-accent shadow' : 'text-gray-500 hover:bg-gray-300'}`}>
                 Active
@@ -184,6 +195,15 @@ const App: React.FC = () => {
                 </div>
             )}
             
+            <button 
+                onClick={handleResetFilters} 
+                className="p-2 rounded-full text-gray-500 hover:bg-gray-200 hover:text-brand-accent transition-colors"
+                aria-label="Reset filters and view"
+                title="Reset filters and view"
+            >
+                <ArrowPathIcon className="w-5 h-5" />
+            </button>
+            
             <div className="flex items-center gap-2 border-l pl-4">
                 <select value={selectedBeam} onChange={handleBeamChange} className={filterSelectClasses}>
                     <option value="all">All Beams</option>
@@ -207,29 +227,41 @@ const App: React.FC = () => {
           </div>
 
           {page === 'operations' && (
-             <div className="animate-fade-in">
+             <div className="animate-fade-in flex-grow">
                 <KeyMetrics />
-                <div className="mt-6 grid grid-cols-1 xl:grid-cols-5 gap-6">
-                    <div className="xl:col-span-4 grid grid-cols-1 lg:grid-cols-4 gap-6">
-                        {priorityOrder.map(priority => (
-                        <div key={priority} className="bg-brand-secondary p-4 rounded-lg shadow-md">
-                            <h3 className="text-lg font-bold mb-4 pb-2 border-b-2 border-brand-accent">{priority} ({ticketsByPriority[priority]?.length || 0})</h3>
-                            <div className="space-y-4 max-h-[65vh] overflow-y-auto pr-2">
-                            {ticketsByPriority[priority] && ticketsByPriority[priority].length > 0 ? (
-                                ticketsByPriority[priority].map(ticket => (
-                                <TicketCard key={ticket.id} ticket={ticket} onClick={() => setSelectedTicket(ticket)}/>
-                                ))
-                            ) : (
-                                <p className="text-brand-light text-sm text-center py-4">No {viewMode} tickets with this priority.</p>
-                            )}
-                            </div>
-                        </div>
-                        ))}
-                    </div>
-                    <aside className="xl:col-span-1 space-y-6">
+                <div className="mt-6 grid grid-cols-1 lg:grid-cols-12 gap-6 h-[calc(100%-5rem)]">
+                    {/* Column 1: Live System Status */}
+                    <aside className="lg:col-span-3 xl:col-span-2 space-y-6 overflow-y-auto pr-2">
+                        <h2 className="text-xl font-bold text-brand-text sticky top-0 bg-brand-primary/80 backdrop-blur-sm py-2 z-10">Live System Status</h2>
                         <ServiceHealth services={services} />
                         <CriticalAlerts alerts={alerts} />
+                    </aside>
+                    {/* Column 2: Ticket Operations */}
+                    <div className="lg:col-span-6 xl:col-span-7">
+                        <h2 className="text-xl font-bold text-brand-text mb-4">Ticket Operations ({viewModeText})</h2>
+                        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6 h-[calc(100%-3rem)]">
+                            {priorityOrder.map(priority => (
+                                <div key={priority} className="bg-brand-secondary p-4 rounded-lg shadow-md flex flex-col">
+                                    <h3 className="text-lg font-bold mb-4 pb-2 border-b-2 border-brand-accent flex-shrink-0">{priority} ({ticketsByPriority[priority]?.length || 0})</h3>
+                                    <div className="space-y-4 overflow-y-auto pr-2 flex-grow">
+                                        {ticketsByPriority[priority] && ticketsByPriority[priority].length > 0 ? (
+                                            ticketsByPriority[priority].map(ticket => (
+                                                <TicketCard key={ticket.id} ticket={ticket} onClick={() => setSelectedTicket(ticket)}/>
+                                            ))
+                                        ) : (
+                                            <p className="text-brand-light text-sm text-center py-4">No {viewMode} tickets.</p>
+                                        )}
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                    {/* Column 3: SRE Toolkit */}
+                    <aside className="lg:col-span-3 xl:col-span-3 space-y-6 overflow-y-auto pr-2">
+                        <h2 className="text-xl font-bold text-brand-text sticky top-0 bg-brand-primary/80 backdrop-blur-sm py-2 z-10">SRE Toolkit</h2>
                         <OnCallSchedule onCall={onCall} />
+                        <RecentDeployments deployments={deployments} />
+                        <Runbooks runbooks={RUNBOOKS} />
                     </aside>
                 </div>
              </div>

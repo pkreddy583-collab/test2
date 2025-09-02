@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { ChatBubbleOvalLeftEllipsisIcon, PaperAirplaneIcon, XMarkIcon } from './Icons';
+import { RUNBOOKS } from '../data/runbookData';
 
 interface Message {
   sender: 'user' | 'bot';
@@ -21,22 +22,43 @@ const Chatbot: React.FC = () => {
   useEffect(() => {
     if (isOpen) {
         setMessages([
-            { sender: 'bot', text: "Hello! I'm the Smart Assistant. How can I help you with your tickets today?" }
+            { sender: 'bot', text: "Hello! I'm the Smart Assistant. Ask me about a ticket (e.g., 'status INC001005') or for available runbooks." }
         ]);
     }
   }, [isOpen]);
+  
+  const getBotResponse = (userInput: string): string => {
+      const lowerInput = userInput.toLowerCase();
+      
+      const ticketIdMatch = lowerInput.match(/inc\d+/);
+      if (ticketIdMatch) {
+          const ticketId = ticketIdMatch[0].toUpperCase();
+          return `Fetching information for ${ticketId}... In a real scenario, I would show you the current status, assignee, and recent history. For now, you can click on any ticket card to see its full details.`;
+      }
+
+      if (lowerInput.includes('runbook')) {
+          const runbookList = RUNBOOKS.map(r => `- ${r.title}`).join('\n');
+          return `Of course! Here are the available runbooks:\n${runbookList}\n\nI can provide details on any of them if you'd like.`;
+      }
+      
+      if (lowerInput.includes('deploy')) {
+          return "You can view the most recent deployments in the 'Recent Deployments' module on the Operations dashboard. It shows the service, version, and time of each deployment to help correlate incidents with changes.";
+      }
+      
+      return "I'm still in training. You can ask me about a ticket by its ID (e.g., 'status INC001001'), ask for 'runbooks', or ask about recent 'deployments'.";
+  };
 
   const handleSend = () => {
     if (input.trim() === '') return;
 
     const newMessages: Message[] = [...messages, { sender: 'user', text: input }];
     setMessages(newMessages);
+    const userInput = input;
     setInput('');
 
-    // Mock bot response
     setTimeout(() => {
-      const botResponse = "I'm currently in training, but soon I'll be able to fetch ticket details, summarize histories, and suggest next steps. For now, you can find all ticket information by clicking on a ticket card.";
-      setMessages([...newMessages, { sender: 'bot', text: botResponse }]);
+      const botResponse = getBotResponse(userInput);
+      setMessages(prev => [...prev, { sender: 'bot', text: botResponse }]);
     }, 1000);
   };
 
@@ -64,7 +86,7 @@ const Chatbot: React.FC = () => {
               {messages.map((msg, index) => (
                 <div key={index} className={`flex ${msg.sender === 'user' ? 'justify-end' : 'justify-start'}`}>
                   <div
-                    className={`max-w-xs px-4 py-2 rounded-2xl ${
+                    className={`max-w-xs px-4 py-2 rounded-2xl whitespace-pre-wrap ${
                       msg.sender === 'user'
                         ? 'bg-brand-accent text-white rounded-br-none'
                         : 'bg-gray-200 text-brand-text rounded-bl-none'

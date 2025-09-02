@@ -1,4 +1,4 @@
-import { ServiceHealth, ServiceStatus, CriticalAlert, OnCall } from '../types';
+import { ServiceHealth, ServiceStatus, CriticalAlert, OnCall, Deployment } from '../types';
 
 const now = new Date();
 const addMinutes = (date: Date, minutes: number) => new Date(date.getTime() - minutes * 60000);
@@ -38,3 +38,24 @@ export const onCall: OnCall = {
   primary: { name: 'David Miller', phone: '+1 (555) 123-4567' },
   secondary: { name: 'Alice Johnson', phone: '+1 (555) 987-6543' },
 };
+
+export const deployments: Deployment[] = [
+    {
+        id: 'DEPLOY-001',
+        service: 'Bravo Payments Gateway',
+        version: 'v2.5.1',
+        timestamp: addMinutes(now, 25),
+    },
+    {
+        id: 'DEPLOY-002',
+        service: 'Alpha Core Banking',
+        version: 'v1.12.0 (hotfix)',
+        timestamp: addMinutes(now, 90),
+    },
+    {
+        id: 'DEPLOY-003',
+        service: 'Echo Mobile App',
+        version: 'v3.2.1',
+        timestamp: addMinutes(now, 240),
+    },
+];

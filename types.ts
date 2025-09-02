@@ -70,3 +70,16 @@ export interface OnCall {
   primary: { name: string; phone: string };
   secondary: { name: string; phone: string };
 }
+
+export interface Deployment {
+  id: string;
+  service: string;
+  version: string;
+  timestamp: Date;
+}
+
+export interface Runbook {
+  id: string;
+  title: string;
+  description: string;
+}
