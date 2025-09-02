@@ -1,0 +1,5 @@
+{
+  "name": "SLA Command Center test",
+  "description": "An SRE-focused command center for monitoring service health, key metrics, critical alerts, and managing service tickets. It provides a holistic view of system operations and SLA compliance.",
+  "requestFramePermissions": []
+}
